@@ -5,15 +5,35 @@ app = Flask(__name__)
 
 model = pickle.load(open("bmi_model.pkl", "rb"))
 
+@app.route('/')
+def home():
+    return "BMI API is running 🚀"
+
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.get_json()
-    height = data['height']
-    weight = data['weight']
+    try:
+        data = request.get_json()
 
-    prediction = model.predict([[height, weight]])
+        height = float(data['height'])
+        weight = float(data['weight'])
 
-    return jsonify({'result': prediction[0]})
+        prediction = model.predict([[height, weight]])
 
-if __name__ == '__main__':
-    app.run()
+        if prediction[0] == 1:
+            result = "Overweight"
+            message = "You should consider diet & exercise."
+        else:
+            result = "Normal Weight"
+            message = "Keep maintaining your healthy lifestyle."
+
+        return jsonify({
+            'status': 'success',
+            'result': result,
+            'message': message
+        })
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 400
